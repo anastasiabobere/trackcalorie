@@ -10,6 +10,7 @@ class CalorieTracker {
     this._displayCaloriesBurned();
     this._displayCaloriesRemaining();
     this._displayCaloriesProgress();
+    document.getElementById("limit").value = this._calorieLimit;
   }
   //public methods
   addMeal(meal) {
@@ -34,8 +35,8 @@ class CalorieTracker {
       const meal = this._meals[index];
       this._totalCalories -= meal.calories;
       Storage.updateTotalCalories(this._totalCalories);
-
       this._meals.splice(index, 1);
+      Storage.removeMeal(id);
       this._render();
     }
   }
@@ -45,8 +46,8 @@ class CalorieTracker {
       const workout = this._workouts[index];
       this._totalCalories += workout.calories;
       Storage.updateTotalCalories(this._totalCalories);
-
       this._workouts.splice(index, 1);
+      Storage.removeWorkout(id);
       this._render();
     }
   }
@@ -54,6 +55,7 @@ class CalorieTracker {
     this._totalCalories = 0;
     this._meals = [];
     this._workouts = [];
+    Storage.clearAll();
     this._render();
   }
   setLimit(calorieLimit) {
@@ -239,6 +241,29 @@ class Storage {
     workouts.push(workout);
     localStorage.setItem("workouts", JSON.stringify(workouts));
   }
+  static removeMeal(id) {
+    const meals = Storage.getMeals();
+    meals.forEach((meal, index) => {
+      if (meal.id === id) {
+        meals.splice(index, 1);
+      }
+    });
+    localStorage.setItem("meals", JSON.stringify(meals));
+  }
+  static removeWorkout(id) {
+    const workouts = Storage.getWorkouts();
+    workouts.forEach((workout, index) => {
+      if (workout.id === id) {
+        workouts.splice(index, 1);
+      }
+    });
+    localStorage.setItem("workouts", JSON.stringify(workouts));
+  }
+  static clearAll() {
+    localStorage.removeItem("totalCalories");
+    localStorage.removeItem("meals");
+    localStorage.removeItem("workouts");
+  }
 }
 
 class App {
@@ -270,6 +295,7 @@ class App {
     document
       .getElementById("reset")
       .addEventListener("click", this._reset.bind(this));
+
     document
       .getElementById("limit-form")
       .addEventListener("submit", this._setLimit.bind(this));
@@ -332,7 +358,7 @@ class App {
     document.getElementById("meal-items").innerHTML = "";
     document.getElementById("workout-items").innerHTML = "";
     document.getElementById("filter-meals").value = "";
-    document.getElementById("filter-workout").value = "";
+    document.getElementById("filter-meals").value = "";
   }
   _setLimit(e) {
     e.preventDefault();
